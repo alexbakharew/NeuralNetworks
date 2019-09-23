@@ -13,8 +13,22 @@ class Neuron(object):
 
 def main():
     points = []
-    with open("input.txt") as input_file:
-        arr = input_file.readline()
+    with open("input.txt", encoding='utf-8') as input_file:
+        X = input_file.readline().split(" ")
+        Y = input_file.readline().split(" ")
+        print(X)
+        print(Y)
+
+        if len(X) != len(Y):
+            print("Incorrect input data. Exit")
+            exit(-1)
+        for i in range(len(X)):
+            x_raw = str(X[i])
+            y_raw = str(Y[i])
+            x = float(x_raw.strip("\""))
+            y = float(y_raw)
+
+            points.append([x,y])
     
     print(points)
 
