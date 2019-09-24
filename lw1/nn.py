@@ -6,36 +6,33 @@ class Neuron(object):
         weight = [random.randrange(-10, 10) for i in range(InputNumber)]
         print(weight)
 
-    def Learn(Epochs, InputList, ClassList):
+    def Learn(self, Epochs, InputList, ClassList):
         x = 4
     def Predict(Input):
         x = 2
 
 def main():
     points = []
+    classes = []
     with open("input.txt", encoding='utf-8') as input_file:
-        X = input_file.readline().split(" ")
-        Y = input_file.readline().split(" ")
-        print(X)
-        print(Y)
+        X = input_file.readline().strip("\n").split(" ")
+        Y = input_file.readline().strip("\n").split(" ")
 
         if len(X) != len(Y):
             print("Incorrect input data. Exit")
             exit(-1)
         for i in range(len(X)):
-            x_raw = str(X[i])
-            y_raw = str(Y[i])
-            x = float(x_raw.strip("\""))
-            y = float(y_raw)
-
-            points.append([x,y])
+            points.append([float(X[i]), float(Y[i])])
     
+    with open("classes.txt", encoding='utf-8') as input_class_file:
+        classes = input_class_file.readline().split(" ")
+        
     print(points)
-
-
-
+    print(classes)
 
     neuro = Neuron(2)
+    neuro.Learn(50, points, classes)
+
 
 if __name__ == "__main__":
     main()
