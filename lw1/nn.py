@@ -3,49 +3,45 @@ import math
 import matplotlib.pyplot as plt
 
 class Neuron(object):
-    def __init__(self, feature_num, learn_speed):
-        self.feature_num = feature_num
-        self.weights = [(random.randrange(1, 10)) for _ in range(feature_num + 1)]
-        self.learn_speed = learn_speed
+    def __init__(self, feature_num):
+        self.weights = [(random.randrange(1, 10)) / 100 for _ in range(feature_num + 1)]
         print("RANDOM WEIGHTS = ", self.weights)
 
-    def ActivationFunction(self, features):
-        if len(features) + 1 != len(self.weights):
+    def ActivationFunction(self, feature):
+        if len(feature) + 1 != len(self.weights):
             exit(-1)
             
         res = float(self.weights[0])
-        for i, w in zip(features, self.weights[1:]):
+        for i, w in zip(feature, self.weights[1:]):
             res += i * w
         return 1 if res > 0 else 0
 
-    def Learn(self, epochs, features, labels):
+    def Learn(self, features, labels, learn_speed):
         if len(features) != len(labels):
             print("features list and labels list not equal")
             exit(-1)
             
-        for _ in range(epochs):
-            for point, label in zip(features, labels):
-                pred_label = self.ActivationFunction(point)
-
-                if pred_label == label:
-                    continue
-                else:
-                    if pred_label > label: # 1 0
-                        self.weights[0] -= self.learn_speed
-                        for i in range(1, len(self.weights)):
-                            self.weights[i] -= self.learn_speed * point[i - 1]
-                    else: # 0 1
-                        self.weights[0] += self.learn_speed
-                        for i in range(1, len(self.weights)):
-                            self.weights[i] += self.learn_speed * point[i - 1]
+        for point, label in zip(features, labels):
+            pred_label = self.ActivationFunction(point)
+            if pred_label == label:
+                continue
+            else:
+                if pred_label > label: # 1 0
+                    self.weights[0] -= learn_speed
+                    for i in range(1, len(self.weights)):
+                        self.weights[i] -= learn_speed * point[i - 1]
+                else: # 0 1
+                    self.weights[0] += learn_speed
+                    for i in range(1, len(self.weights)):
+                        self.weights[i] += learn_speed * point[i - 1]
                             
-        print("Weights after learning ", self.weights)
+        # print("Weights after learning ", self.weights)
 
-    def Predict(self, features, label):
-        if len(features) + 1 != len(self.weights):
+    def Predict(self, feature):
+        if len(feature) + 1 != len(self.weights):
             print("Incorrect feature input")
             exit(-1)
-        return self.ActivationFunction(features) 
+        return self.ActivationFunction(feature) 
 
 
     def ShowPlot(self, points, labels):
@@ -70,7 +66,21 @@ class Neuron(object):
 
 class NeuralNetwork(object):
     def __init__(self, neuron_count, feature_num, learn_speed):
-        self.neurons = [Neuron(feature_num, learn_speed) for i in range(neuron_count)]
+        self.neurons = [Neuron(feature_num) for i in range(neuron_count)]
+        self.learn_speed = learn_speed
+    
+    def Train(self, train_data, labels, epochs=50):
+        for _ in range(epochs):
+            for neuron in self.neurons:
+                neuron.Learn(train_data, labels, self.learn_speed)
+        for n in self.neurons:
+            n.ShowPlot(train_data, labels)
+    
+    def Predict(self, point):
+        result = []
+        for neuron in self.neurons:
+            result.append(neuron.Predict(point))
+        return result
 
 def ReadPoints(file_name):
     points = []
@@ -97,18 +107,22 @@ def main():
     points = ReadPoints("input.txt")
     classes = ReadLabels("classes.txt")
         
-    neuro = Neuron(2, 0.1)
-    neuro.Learn(50, points, classes)
+    # neuro = Neuron(2)
+    # neuro.Learn(50, points, classes)
 
+    nn = NeuralNetwork(1, 2, 0.01)
     error = 0
-    print("TRYING TO PREDICT TRAIN DATA")
-    for point, label in zip(points, classes):
-        pred_lbl = neuro.Predict(point, label)
-        error += abs(pred_lbl - label)
-        print("point = {}, label = {}, pred_label = {}".format(point, label, pred_lbl))
-    print("error = {}".format(abs(error)))
+    nn.Train(points, classes)
 
-    neuro.ShowPlot(points, classes)
+    
+    # print("TRYING TO PREDICT TRAIN DATA")
+    # for point, label in zip(points, classes):
+    #     pred_lbl = neuro.Predict(point, label)
+    #     error += abs(pred_lbl - label)
+    #     print("point = {}, label = {}, pred_label = {}".format(point, label, pred_lbl))
+    # print("error = {}".format(abs(error)))
+
+    # neuro.ShowPlot(points, classes)
     # print("TRYING TO PREDICT RANDOM DATA")
 
 if __name__ == "__main__":
