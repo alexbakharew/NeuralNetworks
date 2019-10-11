@@ -16,27 +16,20 @@ class Neuron(object):
             res += i * w
         return 1 if res > 0 else 0
 
-    def Learn(self, features, labels, learn_speed):
-        if len(features) != len(labels):
-            print("features list and labels list not equal")
-            exit(-1)
-            
-        for point, label in zip(features, labels):
-            pred_label = self.ActivationFunction(point)
-            if pred_label == label:
-                continue
-            else:
-                if pred_label > label: # 1 0
-                    self.weights[0] -= learn_speed
-                    for i in range(1, len(self.weights)):
-                        self.weights[i] -= learn_speed * point[i - 1]
-                else: # 0 1
-                    self.weights[0] += learn_speed
-                    for i in range(1, len(self.weights)):
-                        self.weights[i] += learn_speed * point[i - 1]
+    def Learn(self, point, label, learn_speed):
+        pred_label = self.ActivationFunction(point)
+        if pred_label == label:
+            return
+        else:
+            if pred_label > label: # 1 0
+                self.weights[0] -= learn_speed
+                for i in range(1, len(self.weights)):
+                    self.weights[i] -= learn_speed * point[i - 1]
+            else: # 0 1
+                self.weights[0] += learn_speed
+                for i in range(1, len(self.weights)):
+                    self.weights[i] += learn_speed * point[i - 1]
                             
-        # print("Weights after learning ", self.weights)
-
     def Predict(self, feature):
         if len(feature) + 1 != len(self.weights):
             print("Incorrect feature input")
@@ -69,18 +62,42 @@ class NeuralNetwork(object):
         self.neurons = [Neuron(feature_num) for i in range(neuron_count)]
         self.learn_speed = learn_speed
     
-    def Train(self, train_data, labels, epochs=50):
+    def Train(self, points, labels, epochs=50):
         for _ in range(epochs):
-            for neuron in self.neurons:
-                neuron.Learn(train_data, labels, self.learn_speed)
-        for n in self.neurons:
-            n.ShowPlot(train_data, labels)
+            for point, label in zip(points, labels):
+                for neuron, label_val in zip(self.neurons, label):
+                    neuron.Learn(point, label_val, self.learn_speed)
     
     def Predict(self, point):
         result = []
         for neuron in self.neurons:
             result.append(neuron.Predict(point))
         return result
+    
+    def ShowPlot(self, points, labels):
+        plt.plot([-10, 10], [0, 0]) #x axis
+        plt.plot([0, 0], [-50, 50]) # y axis
+
+        for neuron in self.neurons:
+            x_value = []
+            y_value = []
+            i = -5
+            while i <=5: # draw line between classes
+                x_value.append(i)
+                y_value.append(-((neuron.weights[0] + neuron.weights[1] * i) / neuron.weights[2]))
+                i += 0.01
+            plt.plot(x_value, y_value)
+
+        #draw classes
+        def get_color(label):
+            color = 0
+            for i in range(0, len(label)):
+                color += (2 ** i) * label[i]
+            return color
+
+        plt.scatter([p[0] for p in points], [p[1] for p in points], c=[get_color(l) for l in labels])
+
+        plt.show()
 
 def ReadPoints(file_name):
     points = []
@@ -96,34 +113,90 @@ def ReadPoints(file_name):
     return points
 
 def ReadLabels(file_name):
-    labels = []
-    with open("classes.txt", encoding='utf-8') as input_class_file:
-        labels = input_class_file.readline().split(" ")
-    for i in range(len(labels)):
-        labels[i] = int(labels[i])
+    with open(file_name, encoding='utf-8') as input_class_file:
+        data = input_class_file.readlines()
+        for i in range(len(data)):
+            data[i] = data[i].strip("\n").split(" ")
+
+    labels_num = len(data[0])
+    labels = [[] for _ in range(labels_num)]
+
+    for i in range(len(data)):
+        for j in range(labels_num):
+            labels[j].append(int(data[i][j]))
     return labels
 
-def main():
-    points = ReadPoints("input.txt")
-    classes = ReadLabels("classes.txt")
-        
-    # neuro = Neuron(2)
-    # neuro.Learn(50, points, classes)
+def GenRandomPoints(num):
+    points = []
+    for _ in range(num):
+        random.seed()
+        x = random.randrange(-5, 5)
+        y = random.randrange(-5, 5)
+        points.append([x, y])
+    return points
+
+
+def FirstTask():
+    points = ReadPoints("input_1.txt")
+    classes = ReadLabels("classes_1.txt")
 
     nn = NeuralNetwork(1, 2, 0.01)
-    error = 0
-    nn.Train(points, classes)
-
+    nn.Train(points, classes, epochs=50)
+    for point, label in zip(points, classes):
+        res = nn.Predict(point)
+        print("point = {}, label = {}, pred_label = {}".format(point, label, res))
     
-    # print("TRYING TO PREDICT TRAIN DATA")
-    # for point, label in zip(points, classes):
-    #     pred_lbl = neuro.Predict(point, label)
-    #     error += abs(pred_lbl - label)
-    #     print("point = {}, label = {}, pred_label = {}".format(point, label, pred_lbl))
-    # print("error = {}".format(abs(error)))
+    # nn.ShowPlot(points, classes)
 
-    # neuro.ShowPlot(points, classes)
-    # print("TRYING TO PREDICT RANDOM DATA")
+    print("----------------------------")
+
+    validation_points = GenRandomPoints(3)
+    val_labels = []
+    for val_point in validation_points:
+        res = nn.Predict(val_point)
+        print("point = {}, pred_label = {}".format(val_point, res))
+        val_labels.append(res)
+
+    # nn.ShowPlot(validation_points, val_labels)
+
+    print("----------------------------")
+
+    random.shuffle(points)
+    random.shuffle(classes)
+    pred_labels = []
+    for point, label in zip(points, classes):
+        res = nn.Predict(point)
+        print("point = {}, label = {}, pred_label = {}".format(point, label, res))
+        pred_labels.append(res)
+    nn.ShowPlot(points, classes)
+
+def SecondTask():
+    points = ReadPoints("input_2.txt")
+    classes = ReadLabels("classes_2.txt")
+
+    nn = NeuralNetwork(2, 2, 0.01)
+    nn.Train(points, classes, epochs=50)
+    for point, label in zip(points, classes):
+        res = nn.Predict(point)
+        print("point = {}, label = {}, pred_label = {}".format(point, label, res))
+    nn.ShowPlot(points, classes)
+
+    print("----------------------------")
+
+    validation_points = GenRandomPoints(5)
+    val_labels = []
+    for val_point in validation_points:
+        res = nn.Predict(val_point)
+        print("point = {}, pred_label = {}".format(val_point, res))
+        val_labels.append(res)
+    nn.ShowPlot(validation_points, val_labels)
+
+
+def main():
+
+    FirstTask()
+    SecondTask()
+
 
 if __name__ == "__main__":
     main()
