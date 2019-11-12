@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 class Neuron(object):
     def __init__(self, feature_num):
         self.weights = [(random.randrange(1, 10)) / 100 for _ in range(feature_num + 1)]
-        print("RANDOM WEIGHTS = ", self.weights)
 
     def ActivationFunction(self, feature):
         if len(feature) + 1 != len(self.weights):
@@ -146,7 +145,7 @@ def FirstTask():
         res = nn.Predict(point)
         print("point = {}, label = {}, pred_label = {}".format(point, label, res))
     
-    # nn.ShowPlot(points, classes)
+    nn.ShowPlot(points, classes)
 
     print("----------------------------")
 
@@ -157,7 +156,7 @@ def FirstTask():
         print("point = {}, pred_label = {}".format(val_point, res))
         val_labels.append(res)
 
-    # nn.ShowPlot(validation_points, val_labels)
+    nn.ShowPlot(validation_points, val_labels)
 
     print("----------------------------")
 
@@ -195,7 +194,7 @@ def SecondTask():
 def main():
 
     FirstTask()
-    SecondTask()
+    #SecondTask()
 
 
 if __name__ == "__main__":
